@@ -37,4 +37,7 @@ export interface DownloadRow extends Progress {
   /** Set only for playlist-batch items; lets the cancel button call
    *  cancelPlaylistDownload(batchId) instead of cancelDownload(id). */
   batchId?: string;
+  /** Snapshotted from MediaInfo/PlaylistEntry at registration time - progress
+   *  events never carry it, so it has to survive on the row itself. */
+  thumbnail?: string;
 }

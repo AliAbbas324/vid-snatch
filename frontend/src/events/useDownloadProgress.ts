@@ -43,10 +43,10 @@ export function useDownloadProgress() {
     };
   }, []);
 
-  function registerDownload(id: string, title: string) {
+  function registerDownload(id: string, title: string, thumbnail?: string) {
     setDownloads((prev) => ({
       ...prev,
-      [id]: { id, percent: 0, speed: "", eta: "", stage: "queued", title },
+      [id]: { id, percent: 0, speed: "", eta: "", stage: "queued", title, thumbnail },
     }));
   }
 
@@ -55,15 +55,48 @@ export function useDownloadProgress() {
   // cancelPlaylistDownload(batchId) instead of cancelDownload(id). The batch
   // runner emits real "download:progress" events per entry.ID exactly like an
   // ad-hoc download, so no separate batch-progress event stream is needed.
-  function registerBatch(batchId: string, entries: { id: string; title: string }[]) {
+  function registerBatch(batchId: string, entries: { id: string; title: string; thumbnail?: string }[]) {
     setDownloads((prev) => {
       const next = { ...prev };
       for (const e of entries) {
-        next[e.id] = { id: e.id, percent: 0, speed: "", eta: "", stage: "queued", title: e.title, batchId };
+        next[e.id] = {
+          id: e.id,
+          percent: 0,
+          speed: "",
+          eta: "",
+          stage: "queued",
+          title: e.title,
+          thumbnail: e.thumbnail,
+          batchId,
+        };
       }
       return next;
     });
   }
 
-  return { downloads, registerDownload, registerBatch };
+  /** Drops a single row - used when a retry replaces an errored row with a
+   *  freshly-registered one under a new download ID. */
+  function removeDownload(id: string) {
+    setDownloads((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
+
+  /** Drops every row that's no longer active - done, error, or cancelled. */
+  function clearCompleted() {
+    setDownloads((prev) => {
+      const next: Record<string, DownloadRow> = {};
+      for (const [id, row] of Object.entries(prev)) {
+        if (row.stage === "downloading" || row.stage === "processing" || row.stage === "queued") {
+          next[id] = row;
+        }
+      }
+      return next;
+    });
+  }
+
+  return { downloads, registerDownload, registerBatch, removeDownload, clearCompleted };
 }

@@ -1,65 +1,180 @@
 @import "tailwindcss";
 
 /*
- * Warm-monochrome editorial theme. This is a desktop app with no guaranteed
- * network access at runtime, so type stacks lean on system fonts rather than
- * a bundled/CDN webfont - "SF Pro Display"/"Helvetica Neue" and a system
- * serif stack, not a fetched Google Font.
+ * Command Deck theme. This is a desktop app with no guaranteed network access
+ * at runtime, so type stacks lean on system fonts rather than a bundled/CDN
+ * webfont - system sans/mono stacks, not a fetched Google Font.
+ *
+ * Colors are runtime-swappable CSS custom properties, not just Tailwind
+ * build-time tokens: `@theme` below registers the defaults (dark) as the
+ * `--color-*` variables Tailwind's utilities reference, and the override
+ * blocks further down repoint those same variable names for light mode /
+ * system preference. Every `bg-surface`, `text-ink-muted`, etc. utility
+ * therefore repaints correctly without any `dark:` variants in component code.
  */
 @theme {
-  --color-canvas: #fbfbfa;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f9f9f8;
-  --color-border: #eaeaea;
-  --color-ink: #17171a;
-  --color-ink-muted: #787774;
-  --color-cta: #111111;
-  --color-cta-hover: #333333;
-
-  --color-pastel-red-bg: #fdebec;
-  --color-pastel-red-text: #9f2f2d;
-  --color-pastel-blue-bg: #e1f3fe;
-  --color-pastel-blue-text: #1f6c9f;
-  --color-pastel-green-bg: #edf3ec;
-  --color-pastel-green-text: #346538;
-  --color-pastel-yellow-bg: #fbf3db;
-  --color-pastel-yellow-text: #956400;
+  --color-bg: #1a1a1c;
+  --color-surface: #212123;
+  --color-surface-2: #28282b;
+  --color-surface-3: #313134;
+  --color-surface-hover: #38383c;
+  --color-border: #3a3a3d;
+  --color-border-strong: #4a4a4e;
+  --color-ink: #eaeaea;
+  --color-ink-muted: #9d9da0;
+  --color-ink-faint: #6e6e71;
+  --color-accent: #f2a93b;
+  --color-accent-ink: #1c1300;
+  --color-accent-hover: #ffbd5c;
+  --color-accent-wash: rgba(242, 169, 59, 0.14);
+  --color-success: #57c785;
+  --color-success-wash: rgba(87, 199, 133, 0.14);
+  --color-danger: #f2685b;
+  --color-danger-wash: rgba(242, 104, 91, 0.14);
 
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-serif:
-    "Iowan Old Style", "Palatino Linotype", "URW Palladio L", Georgia, ui-serif, serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", system-ui, sans-serif;
   --font-mono:
     ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
 }
 
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-bg: #f4f5f7;
+    --color-surface: #ffffff;
+    --color-surface-2: #eef0f3;
+    --color-surface-3: #e3e6ec;
+    --color-surface-hover: #dbdfe6;
+    --color-border: #dfe2e8;
+    --color-border-strong: #c9ced7;
+    --color-ink: #14171c;
+    --color-ink-muted: #57606f;
+    --color-ink-faint: #9aa0ab;
+    --color-accent: #b3690a;
+    --color-accent-ink: #ffffff;
+    --color-accent-hover: #995a08;
+    --color-accent-wash: rgba(179, 105, 10, 0.1);
+    --color-success: #1f8f57;
+    --color-success-wash: rgba(31, 143, 87, 0.1);
+    --color-danger: #c53527;
+    --color-danger-wash: rgba(197, 53, 39, 0.1);
+  }
+}
+
+:root[data-theme="light"] {
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f3;
+  --color-surface-3: #e3e6ec;
+  --color-surface-hover: #dbdfe6;
+  --color-border: #dfe2e8;
+  --color-border-strong: #c9ced7;
+  --color-ink: #14171c;
+  --color-ink-muted: #57606f;
+  --color-ink-faint: #9aa0ab;
+  --color-accent: #b3690a;
+  --color-accent-ink: #ffffff;
+  --color-accent-hover: #995a08;
+  --color-accent-wash: rgba(179, 105, 10, 0.1);
+  --color-success: #1f8f57;
+  --color-success-wash: rgba(31, 143, 87, 0.1);
+  --color-danger: #c53527;
+  --color-danger-wash: rgba(197, 53, 39, 0.1);
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #1a1a1c;
+  --color-surface: #212123;
+  --color-surface-2: #28282b;
+  --color-surface-3: #313134;
+  --color-surface-hover: #38383c;
+  --color-border: #3a3a3d;
+  --color-border-strong: #4a4a4e;
+  --color-ink: #eaeaea;
+  --color-ink-muted: #9d9da0;
+  --color-ink-faint: #6e6e71;
+  --color-accent: #f2a93b;
+  --color-accent-ink: #1c1300;
+  --color-accent-hover: #ffbd5c;
+  --color-accent-wash: rgba(242, 169, 59, 0.14);
+  --color-success: #57c785;
+  --color-success-wash: rgba(87, 199, 133, 0.14);
+  --color-danger: #f2685b;
+  --color-danger-wash: rgba(242, 104, 91, 0.14);
+}
+
 html {
-  background-color: var(--color-canvas);
+  background-color: var(--color-bg);
 }
 
 body {
   margin: 0;
   color: var(--color-ink);
-  background-color: var(--color-canvas);
+  background-color: var(--color-bg);
   font-family: var(--font-sans);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-#app {
+#root {
   min-height: 100vh;
 }
 
-@keyframes fade-in-up {
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+.animate-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-3) 25%,
+    var(--color-surface-hover) 37%,
+    var(--color-surface-3) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes row-enter {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+.animate-row-enter {
+  animation: row-enter 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-.animate-fade-in-up {
-  animation: fade-in-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

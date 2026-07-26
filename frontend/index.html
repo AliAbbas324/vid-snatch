@@ -4,6 +4,18 @@
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>vid-snatch</title>
+    <script>
+        // Applied before first paint so switching themes doesn't flash the
+        // wrong palette while React boots.
+        (function () {
+            try {
+                var saved = localStorage.getItem("vs-theme");
+                if (saved === "light" || saved === "dark") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
 <div id="root"></div>

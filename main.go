@@ -20,12 +20,20 @@ func main() {
 		Title:     "vid-snatch",
 		Width:     1024,
 		Height:    768,
-		MinWidth:  900,
-		MinHeight: 640,
+		// Kept low deliberately: the UI (icon rail + reflowing top bar +
+		// internally-scrolling table) is designed to stay usable all the way
+		// down to this floor, so a small/tiled window isn't artificially
+		// blocked from going smaller than it needs to.
+		MinWidth:  640,
+		MinHeight: 480,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 251, G: 251, B: 250, A: 1},
+		// Matches the dark theme's base surface - the common case, since
+		// most OSes default to dark or the user hasn't chosen light yet -
+		// so the native window paints close to the eventual page instead of
+		// flashing white before the webview content takes over.
+		BackgroundColour: &options.RGBA{R: 26, G: 26, B: 28, A: 1},
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
