@@ -20,12 +20,8 @@ func main() {
 		Title:     "vid-snatch",
 		Width:     1024,
 		Height:    768,
-		// Kept low deliberately: the UI (icon rail + reflowing top bar +
-		// internally-scrolling table) is designed to stay usable all the way
-		// down to this floor, so a small/tiled window isn't artificially
-		// blocked from going smaller than it needs to.
-		MinWidth:  640,
-		MinHeight: 480,
+		MinWidth:  1024,
+		MinHeight: 768,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

@@ -1,13 +1,5 @@
-import {
-  Command,
-  GearSix,
-  MagnifyingGlass,
-  Moon,
-  CircleHalf,
-  Sun,
-  TerminalWindow,
-  TrayArrowDown,
-} from "@phosphor-icons/react";
+import { Command, GearSix, MagnifyingGlass, Moon, CircleHalf, Sun, TrayArrowDown } from "@phosphor-icons/react";
+import { Logo } from "./Logo";
 import type { ThemeChoice } from "../theme/useTheme";
 
 export type View = "discover" | "downloads" | "settings";
@@ -60,9 +52,7 @@ export function Rail({ view, onViewChange, activeCount, onOpenPalette, theme, on
 
   return (
     <div className="flex w-18 shrink-0 flex-col items-center border-r border-border bg-surface py-4">
-      <div className="mb-5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-ink">
-        <TerminalWindow weight="fill" size={19} />
-      </div>
+      <Logo size={36} className="mb-5 shrink-0" />
 
       <div className="flex flex-col gap-1.5">
         <RailButton active={view === "discover"} label="Discover" onClick={() => onViewChange("discover")}>

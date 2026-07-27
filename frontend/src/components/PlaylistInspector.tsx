@@ -88,10 +88,10 @@ function PlaylistForm({
 
   if (info.entries.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-9 text-center text-ink-muted">
-        <ListBullets size={30} className="text-ink-faint" />
-        <h4 className="text-[15px] font-bold text-ink">No videos in this playlist</h4>
-        <p className="max-w-80 text-sm leading-relaxed">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-10 text-center text-ink-muted">
+        <ListBullets size={34} className="text-ink-faint" />
+        <h4 className="text-lg font-bold text-ink">No videos in this playlist</h4>
+        <p className="max-w-90 text-base leading-relaxed">
           Every entry may be private, deleted, or region-locked. Try a different playlist link.
         </p>
       </div>
@@ -100,40 +100,40 @@ function PlaylistForm({
 
   return (
     <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
-      {info.uploader && <p className="-mt-2 font-mono text-[13px] text-ink-muted">{info.uploader}</p>}
+      {info.uploader && <p className="-mt-2 font-mono text-base text-ink-muted">{info.uploader}</p>}
 
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[13px] text-ink-muted">
+        <span className="font-mono text-base text-ink-muted">
           {order.length} of {info.entries.length} selected
         </span>
         <button
           type="button"
           onClick={order.length === info.entries.length ? () => setOrder([]) : selectAll}
-          className="flex items-center gap-2 rounded-lg border border-border-strong bg-surface-2 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-3"
+          className="flex items-center gap-2 rounded-lg border border-border-strong bg-surface-2 px-3.5 py-2.5 text-base font-semibold text-ink transition-colors hover:bg-surface-3"
         >
-          <ListChecks size={15} weight="bold" />
+          <ListChecks size={17} weight="bold" />
           {order.length === info.entries.length ? "Select none" : "Select all"}
         </button>
       </div>
 
-      <div className="flex max-h-84 flex-col gap-2 overflow-y-auto pr-1">
+      <div className="flex max-h-96 flex-col gap-2.5 overflow-y-auto pr-1">
         {info.entries.map((e) => {
           const pos = order.indexOf(e.id);
           const selected = pos !== -1;
           return (
             <div
               key={e.id}
-              className={`grid grid-cols-[auto_68px_1fr_auto] items-center gap-3 rounded-lg border p-2 transition-colors ${
+              className={`grid grid-cols-[auto_80px_1fr_auto] items-center gap-3.5 rounded-lg border p-2.5 transition-colors ${
                 selected ? "border-border bg-surface-2" : "border-transparent"
               }`}
             >
-              <input type="checkbox" checked={selected} onChange={() => toggle(e.id)} className="h-4 w-4 accent-accent" />
-              <div className="h-9.5 w-17 shrink-0 overflow-hidden rounded-md bg-surface-3">
+              <input type="checkbox" checked={selected} onChange={() => toggle(e.id)} className="h-4.5 w-4.5 accent-accent" />
+              <div className="h-11 w-20 shrink-0 overflow-hidden rounded-md bg-surface-3">
                 {e.thumbnail && <img src={e.thumbnail} alt="" className="h-full w-full object-cover" />}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm text-ink">{e.title}</p>
-                <p className="font-mono text-xs text-ink-muted">
+                <p className="truncate text-base text-ink">{e.title}</p>
+                <p className="font-mono text-sm text-ink-muted">
                   #{e.index}
                   {e.durationSec > 0 && ` · ${formatDuration(e.durationSec)}`}
                 </p>
@@ -146,7 +146,7 @@ function PlaylistForm({
                   aria-label="Move up in download order"
                   className="rounded p-1 text-ink-faint hover:text-ink disabled:opacity-25"
                 >
-                  <CaretUp size={14} weight="bold" />
+                  <CaretUp size={16} weight="bold" />
                 </button>
                 <button
                   type="button"
@@ -155,7 +155,7 @@ function PlaylistForm({
                   aria-label="Move down in download order"
                   className="rounded p-1 text-ink-faint hover:text-ink disabled:opacity-25"
                 >
-                  <CaretDown size={14} weight="bold" />
+                  <CaretDown size={16} weight="bold" />
                 </button>
               </div>
             </div>
@@ -169,7 +169,7 @@ function PlaylistForm({
             type="button"
             key={m}
             onClick={() => setMode(m)}
-            className={`rounded-md px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+            className={`rounded-md px-4.5 py-2.5 text-base font-semibold capitalize transition-colors ${
               mode === m ? "bg-surface-3 text-accent" : "text-ink-muted hover:text-ink"
             }`}
           >
@@ -209,12 +209,12 @@ function PlaylistForm({
           <input
             readOnly
             value={outputDir}
-            className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-2 px-3.5 py-2.5 font-mono text-sm text-ink-muted"
+            className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-2 px-4 py-3 font-mono text-base text-ink-muted"
           />
           <button
             type="button"
             onClick={handleBrowse}
-            className="shrink-0 rounded-lg border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-3"
+            className="shrink-0 rounded-lg border border-border-strong bg-surface-2 px-4.5 py-3 text-base font-semibold text-ink transition-colors hover:bg-surface-3"
           >
             Browse
           </button>
@@ -222,8 +222,8 @@ function PlaylistForm({
       </div>
 
       {error && (
-        <div className="flex items-start gap-2.5 rounded-lg bg-danger-wash px-3.5 py-3 text-sm leading-relaxed text-danger">
-          <WarningCircle size={16} weight="bold" className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2.5 rounded-lg bg-danger-wash px-4 py-3.5 text-base leading-relaxed text-danger">
+          <WarningCircle size={18} weight="bold" className="mt-0.5 shrink-0" />
           {error}
         </div>
       )}
@@ -232,9 +232,9 @@ function PlaylistForm({
         type="button"
         onClick={handleDownload}
         disabled={submitting || order.length === 0}
-        className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-lg bg-accent py-3 text-sm font-bold text-accent-ink transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-60"
+        className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-lg bg-accent py-3.5 text-base font-bold text-accent-ink transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-60"
       >
-        {submitting ? <CircleNotch size={17} weight="bold" className="animate-spin" /> : <DownloadSimple size={17} weight="bold" />}
+        {submitting ? <CircleNotch size={19} weight="bold" className="animate-spin" /> : <DownloadSimple size={19} weight="bold" />}
         {submitting ? "Starting…" : `Download ${order.length} selected`}
       </button>
     </div>
@@ -249,22 +249,22 @@ export function PlaylistInspector({ open, url, info, outputDir, onOutputDirChang
         onClick={onClose}
       />
       <div
-        className={`fixed bottom-0 right-0 top-0 z-40 flex w-120 max-w-[92vw] flex-col border-l border-border-strong bg-surface shadow-2xl transition-transform ${
+        className={`fixed bottom-0 right-0 top-0 z-40 flex w-135 max-w-[92vw] flex-col border-l border-border-strong bg-surface shadow-2xl transition-transform ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-6 py-5">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-6 py-5.5">
           <div className="min-w-0">
-            <div className="font-mono text-xs uppercase tracking-wide text-ink-muted">Discover / Playlist</div>
-            <h3 className="mt-1 truncate text-base font-semibold text-ink">{info?.title || "Playlist"}</h3>
+            <div className="font-mono text-sm uppercase tracking-wide text-ink-muted">Discover / Playlist</div>
+            <h3 className="mt-1 truncate text-lg font-semibold text-ink">{info?.title || "Playlist"}</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-3 hover:text-ink"
+            className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-3 hover:text-ink"
           >
-            <X size={16} weight="bold" />
+            <X size={18} weight="bold" />
           </button>
         </div>
         {info && (

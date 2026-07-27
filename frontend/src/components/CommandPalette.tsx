@@ -76,11 +76,11 @@ export function CommandPalette({ open, onClose, actions }: Props) {
             placeholder="Type a command…"
             className="flex-1 bg-transparent font-mono text-base text-ink placeholder:text-ink-muted focus:outline-none"
           />
-          <span className="font-mono text-xs text-ink-faint">ESC</span>
+          <span className="font-mono text-sm text-ink-faint">ESC</span>
         </div>
         <div className="max-h-85 overflow-y-auto p-2">
           {filtered.length === 0 ? (
-            <div className="px-4 py-7 text-center text-sm text-ink-muted">No matching commands.</div>
+            <div className="px-4 py-7 text-center text-base text-ink-muted">No matching commands.</div>
           ) : (
             filtered.map((a, i) => (
               <button
@@ -88,11 +88,11 @@ export function CommandPalette({ open, onClose, actions }: Props) {
                 key={a.label}
                 onClick={() => run(i)}
                 onMouseEnter={() => setHi(i)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-base transition-colors ${
                   i === hi ? "bg-accent-wash text-accent" : "text-ink"
                 }`}
               >
-                <a.icon size={17} className={i === hi ? "text-accent" : "text-ink-muted"} />
+                <a.icon size={19} className={i === hi ? "text-accent" : "text-ink-muted"} />
                 <span className="flex-1">{a.label}</span>
               </button>
             ))

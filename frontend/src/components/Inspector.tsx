@@ -26,7 +26,7 @@ function ModeSwitch({ mode, onChange }: { mode: DownloadMode; onChange: (m: Down
           type="button"
           key={m}
           onClick={() => onChange(m)}
-          className={`rounded-md px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+          className={`rounded-md px-4.5 py-2.5 text-base font-semibold capitalize transition-colors ${
             mode === m ? "bg-surface-3 text-accent" : "text-ink-muted hover:text-ink"
           }`}
         >
@@ -39,8 +39,8 @@ function ModeSwitch({ mode, onChange }: { mode: DownloadMode; onChange: (m: Down
 
 function EmptyFormatNotice({ text }: { text: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg bg-surface-2 px-3.5 py-3 text-sm leading-relaxed text-ink-muted">
-      <Info size={16} weight="bold" className="mt-0.5 shrink-0 text-ink-faint" />
+    <div className="flex items-start gap-2.5 rounded-lg bg-surface-2 px-4 py-3.5 text-base leading-relaxed text-ink-muted">
+      <Info size={18} weight="bold" className="mt-0.5 shrink-0 text-ink-faint" />
       {text}
     </div>
   );
@@ -58,12 +58,12 @@ function OutputDirRow({ dir, onChange }: { dir: string; onChange: (dir: string) 
         <input
           readOnly
           value={dir}
-          className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-2 px-3.5 py-2.5 font-mono text-sm text-ink-muted"
+          className="min-w-0 flex-1 rounded-lg border border-border-strong bg-surface-2 px-4 py-3 font-mono text-base text-ink-muted"
         />
         <button
           type="button"
           onClick={handleBrowse}
-          className="shrink-0 rounded-lg border border-border-strong bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-3"
+          className="shrink-0 rounded-lg border border-border-strong bg-surface-2 px-4.5 py-3 text-base font-semibold text-ink transition-colors hover:bg-surface-3"
         >
           Browse
         </button>
@@ -129,8 +129,8 @@ function InspectorForm({
         {info.thumbnail && <img src={info.thumbnail} alt="" className="h-full w-full object-cover" />}
       </div>
       <div>
-        <p className="text-base font-semibold leading-snug text-ink">{info.title}</p>
-        <p className="mt-1.5 font-mono text-[13px] text-ink-muted">{formatDuration(info.durationSec)}</p>
+        <p className="text-lg font-semibold leading-snug text-ink">{info.title}</p>
+        <p className="mt-1.5 font-mono text-base text-ink-muted">{formatDuration(info.durationSec)}</p>
       </div>
 
       <ModeSwitch mode={mode} onChange={setMode} />
@@ -221,15 +221,15 @@ function InspectorForm({
             placeholder="00:00"
             className={`w-28 ${selectClass}`}
           />
-          <span className="pb-2.5 text-ink-muted normal-case">to</span>
+          <span className="pb-3 text-base text-ink-muted normal-case">to</span>
           <input
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
             placeholder="end"
             className={`w-28 ${selectClass}`}
           />
-          <label className="flex items-center gap-2.5 pb-2.5 font-sans text-sm font-normal normal-case tracking-normal text-ink-muted">
-            <input type="checkbox" checked={writeSubs} onChange={(e) => setWriteSubs(e.target.checked)} className="h-4 w-4 accent-accent" />
+          <label className="flex items-center gap-2.5 pb-3 font-sans text-base font-normal normal-case tracking-normal text-ink-muted">
+            <input type="checkbox" checked={writeSubs} onChange={(e) => setWriteSubs(e.target.checked)} className="h-4.5 w-4.5 accent-accent" />
             Subtitles
           </label>
         </div>
@@ -238,8 +238,8 @@ function InspectorForm({
       <OutputDirRow dir={outputDir} onChange={onOutputDirChange} />
 
       {submitError && (
-        <div className="flex items-start gap-2.5 rounded-lg bg-danger-wash px-3.5 py-3 text-sm leading-relaxed text-danger">
-          <WarningCircle size={16} weight="bold" className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2.5 rounded-lg bg-danger-wash px-4 py-3.5 text-base leading-relaxed text-danger">
+          <WarningCircle size={18} weight="bold" className="mt-0.5 shrink-0" />
           {submitError}
         </div>
       )}
@@ -247,9 +247,9 @@ function InspectorForm({
       <button
         type="submit"
         disabled={submitting || (mode === "video" && !hasVideoFormats) || (mode === "audio" && !hasAudioFormats)}
-        className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-lg bg-accent py-3 text-sm font-bold text-accent-ink transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-60"
+        className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-lg bg-accent py-3.5 text-base font-bold text-accent-ink transition-colors hover:bg-accent-hover active:scale-[0.98] disabled:opacity-60"
       >
-        {submitting ? <CircleNotch size={17} weight="bold" className="animate-spin" /> : <DownloadSimple size={17} weight="bold" />}
+        {submitting ? <CircleNotch size={19} weight="bold" className="animate-spin" /> : <DownloadSimple size={19} weight="bold" />}
         {submitting ? "Starting…" : "Start download"}
       </button>
     </form>
@@ -266,22 +266,22 @@ export function Inspector({ open, info, outputDir, onOutputDirChange, onSubmit, 
         onClick={onClose}
       />
       <div
-        className={`fixed bottom-0 right-0 top-0 z-40 flex w-120 max-w-[92vw] flex-col border-l border-border-strong bg-surface shadow-2xl transition-transform ${
+        className={`fixed bottom-0 right-0 top-0 z-40 flex w-135 max-w-[92vw] flex-col border-l border-border-strong bg-surface shadow-2xl transition-transform ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-6 py-5">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-6 py-5.5">
           <div>
-            <div className="font-mono text-xs uppercase tracking-wide text-ink-muted">Discover / Format</div>
-            <h3 className="mt-1 text-base font-semibold text-ink">Configure download</h3>
+            <div className="font-mono text-sm uppercase tracking-wide text-ink-muted">Discover / Format</div>
+            <h3 className="mt-1 text-lg font-semibold text-ink">Configure download</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-3 hover:text-ink"
+            className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-3 hover:text-ink"
           >
-            <X size={16} weight="bold" />
+            <X size={18} weight="bold" />
           </button>
         </div>
         {info && (
