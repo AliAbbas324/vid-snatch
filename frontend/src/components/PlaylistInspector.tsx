@@ -61,7 +61,7 @@ function PlaylistForm({
     setError(null);
     try {
       const byId = new Map(info.entries.map((e) => [e.id, e]));
-      const entries = order.map((id) => ({ id, url: byId.get(id)!.url }));
+      const entries = order.map((id) => ({ id, url: byId.get(id)!.url, thumbnail: byId.get(id)!.thumbnail }));
       const batchId = await startPlaylistDownload({
         playlistUrl: url,
         entries,

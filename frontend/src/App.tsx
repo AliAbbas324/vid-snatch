@@ -27,6 +27,7 @@ import { getPlaylistEntries } from "./api/playlist";
 import { startDownload, cancelDownload } from "./api/download";
 import { cancelPlaylistDownload } from "./api/playlist";
 import { getSettings, saveSettings } from "./api/settings";
+import { getHistory, clearHistory } from "./api/history";
 import type { DownloadRequest, DownloadRow, MediaInfo, PlaylistInfo, SearchResult, Settings } from "./types";
 
 export type OmniMode = "link" | "search" | "playlist";
@@ -39,7 +40,7 @@ const VIEW_META: Record<View, { title: string; sub: string }> = {
 
 function App() {
   const { theme, setTheme, cycleTheme } = useTheme();
-  const { downloads, registerDownload, registerBatch, removeDownload, clearCompleted } = useDownloadProgress();
+  const { downloads, registerDownload, registerBatch, hydrate, removeDownload, clearCompleted } = useDownloadProgress();
 
   const [view, setView] = useState<View>("discover");
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -71,6 +72,11 @@ function App() {
     getSettings().then(setSettings);
   }, []);
 
+  useEffect(() => {
+    getHistory().then(hydrate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function showToast(text: string, kind: ToastState["kind"] = "success") {
     setToast({ text, kind });
     clearTimeout(toastTimer.current);
@@ -81,6 +87,7 @@ function App() {
     () => Object.values(downloads).sort((a, b) => (a.id < b.id ? 1 : -1)),
     [downloads],
   );
+  const isDuplicateVideo = activeVideo ? downloadRows.some((r) => r.sourceUrl === activeVideo.url) : false;
   const activeCount = downloadRows.filter((r) => r.stage === "downloading" || r.stage === "processing").length;
   const queuedCount = downloadRows.filter((r) => r.stage === "queued").length;
   const completedCount = downloadRows.filter((r) => r.stage === "done" || r.stage === "error" || r.stage === "cancelled").length;
@@ -142,17 +149,27 @@ function App() {
     }
   }
 
-  /* ---------------- output dir (persisted) ---------------- */
-  async function handleOutputDirChange(dir: string) {
-    if (!settings) return;
-    const next = { ...settings, downloadPath: dir };
+  /* ---------------- settings (persisted) ---------------- */
+  async function persistSettings(next: Settings) {
     setSettings(next);
     try {
       await saveSettings(next);
-      showToast("Output folder updated");
     } catch (err) {
       showToast((err as Error).message, "error");
     }
+  }
+
+  async function handleOutputDirChange(dir: string) {
+    if (!settings) return;
+    await persistSettings({ ...settings, downloadPath: dir });
+    showToast("Output folder updated");
+  }
+
+  // Settings-view field edits save silently (no toast per keystroke/toggle) -
+  // handleOutputDirChange above is the only one that confirms with a toast,
+  // since it's a deliberate one-off "Browse" action rather than a form field.
+  function handleSettingsChange(next: Settings) {
+    persistSettings(next);
   }
 
   /* ---------------- single video download ---------------- */
@@ -167,6 +184,7 @@ function App() {
       url,
       outputDir,
       title,
+      thumbnail: info.thumbnail,
       mode: partial.mode ?? "video",
       videoFormatId: partial.videoFormatId,
       audioFormatId: partial.audioFormatId,
@@ -177,11 +195,12 @@ function App() {
       rangeStart: partial.rangeStart,
       rangeEnd: partial.rangeEnd,
       writeSubs: partial.writeSubs ?? false,
+      subLangs: partial.subLangs,
     } as DownloadRequest;
 
     try {
       const id = await startDownload(req);
-      registerDownload(id, title, info.thumbnail);
+      registerDownload(id, title, { thumbnail: info.thumbnail, outputDir, sourceUrl: url });
       setRetryRequests((prev) => ({ ...prev, [id]: { req, thumbnail: info.thumbnail } }));
       setActiveVideo(null);
       showToast("Added to queue");
@@ -205,22 +224,27 @@ function App() {
     try {
       const newId = await startDownload(req);
       removeDownload(row.id);
-      registerDownload(newId, req.title, thumbnail);
+      registerDownload(newId, req.title, { thumbnail, outputDir: req.outputDir, sourceUrl: req.url });
       setRetryRequests((prev) => {
         const next = { ...prev };
         delete next[row.id];
         next[newId] = stored;
         return next;
       });
-      showToast("Retrying download");
+      showToast(row.stage === "cancelled" ? "Resuming download" : "Retrying download");
     } catch (err) {
       showToast((err as Error).message, "error");
     }
   }
 
-  function handleClearHistory() {
+  async function handleClearHistory() {
     clearCompleted();
-    showToast("History cleared");
+    try {
+      await clearHistory();
+      showToast("History cleared");
+    } catch (err) {
+      showToast((err as Error).message, "error");
+    }
   }
 
   /* ---------------- command palette ---------------- */
@@ -305,9 +329,10 @@ function App() {
               onRetry={handleRetry}
             />
           )}
-          {view === "settings" && (
+          {view === "settings" && settings && (
             <SettingsView
-              outputDir={outputDir}
+              settings={settings}
+              onSettingsChange={handleSettingsChange}
               onOutputDirChange={handleOutputDirChange}
               theme={theme}
               onThemeChange={setTheme}
@@ -326,6 +351,7 @@ function App() {
         onSubmit={handleVideoSubmit}
         submitting={submitting}
         submitError={submitError}
+        isDuplicate={isDuplicateVideo}
         onClose={() => setActiveVideo(null)}
       />
 
@@ -336,7 +362,10 @@ function App() {
         outputDir={outputDir}
         onOutputDirChange={handleOutputDirChange}
         onStarted={(batchId, entries) => {
-          registerBatch(batchId, entries);
+          registerBatch(
+            batchId,
+            entries.map((e) => ({ ...e, outputDir })),
+          );
           setPlaylistPicker(null);
           showToast(`Queued ${entries.length} downloads from playlist`);
         }}

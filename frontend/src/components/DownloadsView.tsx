@@ -1,4 +1,5 @@
-import { ArrowClockwise, FilmSlate, Tray, X } from "@phosphor-icons/react";
+import { ArrowClockwise, FilmSlate, FolderOpen, Tray, X } from "@phosphor-icons/react";
+import { openInFileManager } from "../api/system";
 import type { DownloadRow, DownloadStage } from "../types";
 
 export type DownloadFilter = "all" | "active" | "queued" | "done" | "error";
@@ -109,7 +110,8 @@ export function DownloadsView({ rows, filter, onFilterChange, retryableIds, onCa
             {filtered.map((row) => {
               const active = row.stage === "downloading" || row.stage === "processing";
               const canCancel = active || row.stage === "queued";
-              const canRetry = row.stage === "error" && retryableIds.has(row.id);
+              const canRetry = (row.stage === "error" || row.stage === "cancelled") && retryableIds.has(row.id);
+              const canReveal = row.stage === "done" && !!row.outputDir;
               return (
                 <div
                   key={row.id}
@@ -172,10 +174,22 @@ export function DownloadsView({ rows, filter, onFilterChange, retryableIds, onCa
                       <button
                         type="button"
                         onClick={() => onRetry(row)}
-                        aria-label="Retry"
+                        aria-label={row.stage === "cancelled" ? "Resume" : "Retry"}
+                        title={row.stage === "cancelled" ? "Resume" : "Retry"}
                         className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-accent-wash hover:text-accent"
                       >
                         <ArrowClockwise size={18} weight="bold" />
+                      </button>
+                    )}
+                    {canReveal && (
+                      <button
+                        type="button"
+                        onClick={() => openInFileManager(row.outputDir!)}
+                        aria-label="Open containing folder"
+                        title="Open containing folder"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-3 hover:text-ink"
+                      >
+                        <FolderOpen size={18} weight="bold" />
                       </button>
                     )}
                   </div>

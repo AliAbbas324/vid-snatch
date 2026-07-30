@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { EventsOn } from "../../wailsjs/runtime/runtime";
-import type { DownloadRow, Progress } from "../types";
+import type { DownloadRow, HistoryEntry, Progress } from "../types";
 
 interface ErrorPayload {
   id: string;
   message: string;
+}
+
+interface RowMeta {
+  thumbnail?: string;
+  outputDir?: string;
+  sourceUrl?: string;
 }
 
 /**
@@ -43,10 +49,10 @@ export function useDownloadProgress() {
     };
   }, []);
 
-  function registerDownload(id: string, title: string, thumbnail?: string) {
+  function registerDownload(id: string, title: string, meta?: RowMeta) {
     setDownloads((prev) => ({
       ...prev,
-      [id]: { id, percent: 0, speed: "", eta: "", stage: "queued", title, thumbnail },
+      [id]: { id, percent: 0, speed: "", eta: "", stage: "queued", title, ...meta },
     }));
   }
 
@@ -55,7 +61,7 @@ export function useDownloadProgress() {
   // cancelPlaylistDownload(batchId) instead of cancelDownload(id). The batch
   // runner emits real "download:progress" events per entry.ID exactly like an
   // ad-hoc download, so no separate batch-progress event stream is needed.
-  function registerBatch(batchId: string, entries: { id: string; title: string; thumbnail?: string }[]) {
+  function registerBatch(batchId: string, entries: ({ id: string; title: string } & RowMeta)[]) {
     setDownloads((prev) => {
       const next = { ...prev };
       for (const e of entries) {
@@ -67,7 +73,34 @@ export function useDownloadProgress() {
           stage: "queued",
           title: e.title,
           thumbnail: e.thumbnail,
+          outputDir: e.outputDir,
+          sourceUrl: e.sourceUrl,
           batchId,
+        };
+      }
+      return next;
+    });
+  }
+
+  /** Seeds terminal-stage rows from persisted history - called once at
+   *  startup, before any live session activity. Never overwrites a row that
+   *  (implausibly, given the ordering) already exists. */
+  function hydrate(entries: HistoryEntry[]) {
+    setDownloads((prev) => {
+      const next = { ...prev };
+      for (const e of entries) {
+        if (e.id in next) continue;
+        next[e.id] = {
+          id: e.id,
+          title: e.title,
+          percent: e.percent,
+          speed: "",
+          eta: "",
+          stage: e.stage as DownloadRow["stage"],
+          errorMessage: e.errorMessage,
+          thumbnail: e.thumbnail,
+          outputDir: e.outputDir,
+          sourceUrl: e.sourceUrl,
         };
       }
       return next;
@@ -98,5 +131,5 @@ export function useDownloadProgress() {
     });
   }
 
-  return { downloads, registerDownload, registerBatch, removeDownload, clearCompleted };
+  return { downloads, registerDownload, registerBatch, hydrate, removeDownload, clearCompleted };
 }

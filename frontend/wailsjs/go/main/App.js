@@ -10,6 +10,14 @@ export function CancelPlaylistDownload(arg1) {
   return window['go']['main']['App']['CancelPlaylistDownload'](arg1);
 }
 
+export function ClearHistory() {
+  return window['go']['main']['App']['ClearHistory']();
+}
+
+export function GetHistory() {
+  return window['go']['main']['App']['GetHistory']();
+}
+
 export function GetInfo(arg1) {
   return window['go']['main']['App']['GetInfo'](arg1);
 }
@@ -22,12 +30,24 @@ export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
 
+export function GetToolVersions() {
+  return window['go']['main']['App']['GetToolVersions']();
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function OpenInFileManager(arg1) {
+  return window['go']['main']['App']['OpenInFileManager'](arg1);
+}
+
 export function PickDownloadDir() {
   return window['go']['main']['App']['PickDownloadDir']();
+}
+
+export function PickFile() {
+  return window['go']['main']['App']['PickFile']();
 }
 
 export function SaveSettings(arg1) {

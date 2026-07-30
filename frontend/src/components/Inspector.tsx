@@ -13,6 +13,7 @@ interface Props {
   onSubmit: (req: Partial<DownloadRequest>) => void;
   submitting: boolean;
   submitError: string | null;
+  isDuplicate: boolean;
   onClose: () => void;
 }
 
@@ -42,6 +43,15 @@ function EmptyFormatNotice({ text }: { text: string }) {
     <div className="flex items-start gap-2.5 rounded-lg bg-surface-2 px-4 py-3.5 text-base leading-relaxed text-ink-muted">
       <Info size={18} weight="bold" className="mt-0.5 shrink-0 text-ink-faint" />
       {text}
+    </div>
+  );
+}
+
+function DuplicateNotice() {
+  return (
+    <div className="flex items-start gap-2.5 rounded-lg bg-accent-wash px-4 py-3.5 text-base leading-relaxed text-accent">
+      <Info size={18} weight="bold" className="mt-0.5 shrink-0" />
+      You've already downloaded this video. Downloading again will save another copy.
     </div>
   );
 }
@@ -81,6 +91,7 @@ function InspectorForm({
   onSubmit,
   submitting,
   submitError,
+  isDuplicate,
 }: Omit<Props, "open" | "onClose" | "info"> & { info: MediaInfo }) {
   const hasVideoFormats = info.videoFormats.length > 0;
   const audioOnlyFormats = info.audioFormats.filter((f) => f.formatId !== "none");
@@ -99,6 +110,11 @@ function InspectorForm({
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
   const [writeSubs, setWriteSubs] = useState(false);
+  const [subLangs, setSubLangs] = useState<string[]>([]);
+
+  function toggleSubLang(lang: string) {
+    setSubLangs((prev) => (prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]));
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -107,6 +123,7 @@ function InspectorForm({
       rangeStart: rangeStart || undefined,
       rangeEnd: rangeEnd || undefined,
       writeSubs,
+      subLangs: writeSubs && subLangs.length > 0 ? subLangs.join(",") : undefined,
     };
     if (mode === "video") {
       req.videoFormatId = videoFormatId;
@@ -132,6 +149,8 @@ function InspectorForm({
         <p className="text-lg font-semibold leading-snug text-ink">{info.title}</p>
         <p className="mt-1.5 font-mono text-base text-ink-muted">{formatDuration(info.durationSec)}</p>
       </div>
+
+      {isDuplicate && <DuplicateNotice />}
 
       <ModeSwitch mode={mode} onChange={setMode} />
 
@@ -235,6 +254,31 @@ function InspectorForm({
         </div>
       </div>
 
+      {writeSubs && info.subtitleLanguages.length > 0 && (
+        <div className={labelClass}>
+          Subtitle languages
+          <div className="mt-2 flex flex-wrap gap-2">
+            {info.subtitleLanguages.map((lang) => (
+              <button
+                type="button"
+                key={lang}
+                onClick={() => toggleSubLang(lang)}
+                className={`rounded-full border px-3 py-1.5 text-sm font-semibold normal-case tracking-normal transition-colors ${
+                  subLangs.includes(lang)
+                    ? "border-accent bg-accent-wash text-accent"
+                    : "border-border-strong bg-surface-2 text-ink-muted hover:text-ink"
+                }`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-sm normal-case tracking-normal text-ink-faint">
+            {subLangs.length === 0 ? "None selected downloads every available language." : `${subLangs.length} selected`}
+          </p>
+        </div>
+      )}
+
       <OutputDirRow dir={outputDir} onChange={onOutputDirChange} />
 
       {submitError && (
@@ -258,7 +302,17 @@ function InspectorForm({
 
 /** Slide-in panel from the right. `max-w-[92vw]` keeps it usable even when
  *  the whole window is narrower than the panel's natural width. */
-export function Inspector({ open, info, outputDir, onOutputDirChange, onSubmit, submitting, submitError, onClose }: Props) {
+export function Inspector({
+  open,
+  info,
+  outputDir,
+  onOutputDirChange,
+  onSubmit,
+  submitting,
+  submitError,
+  isDuplicate,
+  onClose,
+}: Props) {
   return (
     <>
       <div
@@ -293,6 +347,7 @@ export function Inspector({ open, info, outputDir, onOutputDirChange, onSubmit, 
             onSubmit={onSubmit}
             submitting={submitting}
             submitError={submitError}
+            isDuplicate={isDuplicate}
           />
         )}
       </div>

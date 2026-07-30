@@ -20,6 +20,10 @@ type Data struct {
 	Proxy                 string `json:"proxy"`
 	ConfigPath            string `json:"configPath"`
 	MaxActiveDownloads    int    `json:"maxActiveDownloads"`
+	// LimitRate is a yt-dlp --limit-rate value (e.g. "1M", "500K"); empty means unlimited.
+	LimitRate string `json:"limitRate"`
+	// SplitChapters runs yt-dlp --split-chapters, cutting the download into one file per chapter.
+	SplitChapters bool `json:"splitChapters"`
 }
 
 // Default returns the built-in defaults, mirroring the ported ytDownloader app.

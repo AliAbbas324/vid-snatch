@@ -1,3 +1,36 @@
+export namespace history {
+	
+	export class Entry {
+	    id: string;
+	    title: string;
+	    thumbnail?: string;
+	    outputDir: string;
+	    sourceUrl: string;
+	    stage: string;
+	    percent: number;
+	    errorMessage?: string;
+	    finishedAt: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Entry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.thumbnail = source["thumbnail"];
+	        this.outputDir = source["outputDir"];
+	        this.sourceUrl = source["sourceUrl"];
+	        this.stage = source["stage"];
+	        this.percent = source["percent"];
+	        this.errorMessage = source["errorMessage"];
+	        this.finishedAt = source["finishedAt"];
+	    }
+	}
+
+}
+
 export namespace settings {
 	
 	export class Data {
@@ -10,6 +43,8 @@ export namespace settings {
 	    proxy: string;
 	    configPath: string;
 	    maxActiveDownloads: number;
+	    limitRate: string;
+	    splitChapters: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Data(source);
@@ -26,6 +61,8 @@ export namespace settings {
 	        this.proxy = source["proxy"];
 	        this.configPath = source["configPath"];
 	        this.maxActiveDownloads = source["maxActiveDownloads"];
+	        this.limitRate = source["limitRate"];
+	        this.splitChapters = source["splitChapters"];
 	    }
 	}
 
@@ -60,9 +97,11 @@ export namespace types {
 	    extractQuality?: string;
 	    outputDir: string;
 	    title: string;
+	    thumbnail?: string;
 	    rangeStart?: string;
 	    rangeEnd?: string;
 	    writeSubs?: boolean;
+	    subLangs?: string;
 	    videoExt?: string;
 	    audioExt?: string;
 	
@@ -80,9 +119,11 @@ export namespace types {
 	        this.extractQuality = source["extractQuality"];
 	        this.outputDir = source["outputDir"];
 	        this.title = source["title"];
+	        this.thumbnail = source["thumbnail"];
 	        this.rangeStart = source["rangeStart"];
 	        this.rangeEnd = source["rangeEnd"];
 	        this.writeSubs = source["writeSubs"];
+	        this.subLangs = source["subLangs"];
 	        this.videoExt = source["videoExt"];
 	        this.audioExt = source["audioExt"];
 	    }
@@ -121,6 +162,7 @@ export namespace types {
 	    extractorKey: string;
 	    videoFormats: VideoFormat[];
 	    audioFormats: AudioFormat[];
+	    subtitleLanguages: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new MediaInfo(source);
@@ -135,6 +177,7 @@ export namespace types {
 	        this.extractorKey = source["extractorKey"];
 	        this.videoFormats = this.convertValues(source["videoFormats"], VideoFormat);
 	        this.audioFormats = this.convertValues(source["audioFormats"], AudioFormat);
+	        this.subtitleLanguages = source["subtitleLanguages"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -158,6 +201,7 @@ export namespace types {
 	export class PlaylistDownloadEntry {
 	    id: string;
 	    url: string;
+	    thumbnail?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new PlaylistDownloadEntry(source);
@@ -167,6 +211,7 @@ export namespace types {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.url = source["url"];
+	        this.thumbnail = source["thumbnail"];
 	    }
 	}
 	export class PlaylistDownloadRequest {
@@ -285,6 +330,20 @@ export namespace types {
 	        this.durationSec = source["durationSec"];
 	        this.thumbnail = source["thumbnail"];
 	        this.channel = source["channel"];
+	    }
+	}
+	export class ToolVersions {
+	    ytdlpVersion: string;
+	    ffmpegVersion: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ToolVersions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ytdlpVersion = source["ytdlpVersion"];
+	        this.ffmpegVersion = source["ffmpegVersion"];
 	    }
 	}
 

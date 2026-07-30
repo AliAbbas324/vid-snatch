@@ -77,10 +77,20 @@ func appendSharedArgs(args []string, req types.DownloadRequest, bin binaries.Bin
 		args = append(args, "--download-sections", rng)
 	}
 	if req.WriteSubs {
-		args = append(args, "--write-subs", "--sub-langs", "all")
+		langs := "all"
+		if req.SubLangs != "" {
+			langs = req.SubLangs
+		}
+		args = append(args, "--write-subs", "--sub-langs", langs)
 	}
 	if s.Proxy != "" {
 		args = append(args, "--no-check-certificate", "--proxy", s.Proxy)
+	}
+	if s.LimitRate != "" {
+		args = append(args, "--limit-rate", s.LimitRate)
+	}
+	if s.SplitChapters {
+		args = append(args, "--split-chapters")
 	}
 	return args
 }

@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os/exec"
+	goruntime "runtime"
+	"time"
 
 	"vid-snatch/internal/binaries"
+	"vid-snatch/internal/history"
 	"vid-snatch/internal/queue"
 	"vid-snatch/internal/settings"
 	"vid-snatch/internal/types"
@@ -93,6 +97,48 @@ func (a *App) PickDownloadDir() (string, error) {
 	})
 }
 
+// PickFile opens a native file picker (used for locating a yt-dlp config
+// file). A user-cancelled dialog returns ("", nil), same convention as
+// PickDownloadDir.
+func (a *App) PickFile() (string, error) {
+	return wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: "Choose a file",
+	})
+}
+
+// GetToolVersions reports the resolved yt-dlp/ffmpeg versions for display in Settings.
+func (a *App) GetToolVersions() (types.ToolVersions, error) {
+	if a.binErr != nil {
+		return types.ToolVersions{}, a.binErr
+	}
+	return ytdlp.GetToolVersions(a.ctx, a.bin)
+}
+
+// GetHistory returns every recorded finished download, oldest first.
+func (a *App) GetHistory() ([]history.Entry, error) {
+	return history.Load()
+}
+
+// ClearHistory erases all recorded finished downloads.
+func (a *App) ClearHistory() error {
+	return history.Clear()
+}
+
+// OpenInFileManager opens path's containing folder in the OS's file manager
+// (path itself may be a file or a directory - only the directory matters).
+func (a *App) OpenInFileManager(path string) error {
+	var cmd *exec.Cmd
+	switch goruntime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", path)
+	case "windows":
+		cmd = exec.Command("explorer", path)
+	default:
+		cmd = exec.Command("xdg-open", path)
+	}
+	return cmd.Start()
+}
+
 // StartDownload builds the yt-dlp argument list for req and submits it to the
 // download queue, returning immediately with a download ID the frontend can
 // use to subscribe to "download:progress" events before the first one arrives.
@@ -107,11 +153,35 @@ func (a *App) StartDownload(req types.DownloadRequest) (string, error) {
 
 	id := uuid.New().String()
 	a.queue.Start(a.ctx, id, func(ctx context.Context) {
+		var last types.Progress
 		emit := func(p types.Progress) {
+			last = p
 			wailsruntime.EventsEmit(a.ctx, "download:progress", p)
 		}
-		if err := ytdlp.Download(ctx, a.bin, id, args, emit); err != nil {
-			wailsruntime.EventsEmit(a.ctx, "download:error", map[string]string{"id": id, "message": err.Error()})
+		runErr := ytdlp.Download(ctx, a.bin, id, args, emit)
+
+		entry := history.Entry{
+			ID:         id,
+			Title:      req.Title,
+			Thumbnail:  req.Thumbnail,
+			OutputDir:  req.OutputDir,
+			SourceURL:  req.URL,
+			Percent:    last.Percent,
+			FinishedAt: time.Now().UnixMilli(),
+		}
+		switch {
+		case ctx.Err() != nil:
+			entry.Stage = "cancelled"
+		case runErr != nil:
+			entry.Stage = "error"
+			entry.ErrorMessage = runErr.Error()
+			wailsruntime.EventsEmit(a.ctx, "download:error", map[string]string{"id": id, "message": runErr.Error()})
+		default:
+			entry.Stage = "done"
+			entry.Percent = 100
+		}
+		if err := history.Append(entry); err != nil {
+			log.Println("history.Append:", err)
 		}
 	})
 	return id, nil
@@ -160,32 +230,43 @@ func (a *App) StartPlaylistDownload(req types.PlaylistDownloadRequest) (string, 
 		items = append(items, queue.BatchItem{
 			ID: entry.ID,
 			Run: func(ctx context.Context) {
+				var last types.Progress
 				emit := func(p types.Progress) {
+					last = p
 					wailsruntime.EventsEmit(a.ctx, "download:progress", p)
 				}
-				fail := func(msg string) {
+				recordFailure := func(title, msg string) {
 					emit(types.Progress{ID: entry.ID, Stage: "error"})
 					wailsruntime.EventsEmit(a.ctx, "download:error", map[string]string{"id": entry.ID, "message": msg})
+					histErr := history.Append(history.Entry{
+						ID: entry.ID, Title: title, Thumbnail: entry.Thumbnail, OutputDir: req.OutputDir,
+						SourceURL: entry.URL, Stage: "error", ErrorMessage: msg, FinishedAt: time.Now().UnixMilli(),
+					})
+					if histErr != nil {
+						log.Println("history.Append:", histErr)
+					}
 				}
 
 				info, err := ytdlp.GetInfo(ctx, a.bin, entry.URL, a.settings)
 				if err != nil {
-					fail(err.Error())
+					recordFailure(entry.ID, err.Error())
 					return
 				}
 
+				title := fmt.Sprintf("%s [%s]", info.Title, info.ID)
 				dreq := types.DownloadRequest{
 					URL:            entry.URL,
 					Mode:           req.Mode,
 					OutputDir:      req.OutputDir,
-					Title:          fmt.Sprintf("%s [%s]", info.Title, info.ID),
+					Title:          title,
+					Thumbnail:      entry.Thumbnail,
 					ExtractFormat:  req.ExtractFormat,
 					ExtractQuality: req.ExtractQuality,
 				}
 				switch req.Mode {
 				case "video":
 					if len(info.VideoFormats) == 0 {
-						fail("no downloadable video formats")
+						recordFailure(title, "no downloadable video formats")
 						return
 					}
 					dreq.VideoFormatID = info.VideoFormats[0].FormatID // index 0 = best, already sorted
@@ -196,7 +277,7 @@ func (a *App) StartPlaylistDownload(req types.PlaylistDownloadRequest) (string, 
 					}
 				case "audio":
 					if len(info.AudioFormats) == 0 {
-						fail("no downloadable audio formats")
+						recordFailure(title, "no downloadable audio formats")
 						return
 					}
 					dreq.AudioFormatID = info.AudioFormats[0].FormatID
@@ -208,11 +289,33 @@ func (a *App) StartPlaylistDownload(req types.PlaylistDownloadRequest) (string, 
 
 				args, _, err := ytdlp.BuildDownloadArgs(dreq, a.bin, a.settings)
 				if err != nil {
-					fail(err.Error())
+					recordFailure(title, err.Error())
 					return
 				}
-				if err := ytdlp.Download(ctx, a.bin, entry.ID, args, emit); err != nil {
-					fail(err.Error())
+
+				runErr := ytdlp.Download(ctx, a.bin, entry.ID, args, emit)
+				histEntry := history.Entry{
+					ID:         entry.ID,
+					Title:      title,
+					Thumbnail:  entry.Thumbnail,
+					OutputDir:  req.OutputDir,
+					SourceURL:  entry.URL,
+					Percent:    last.Percent,
+					FinishedAt: time.Now().UnixMilli(),
+				}
+				switch {
+				case ctx.Err() != nil:
+					histEntry.Stage = "cancelled"
+				case runErr != nil:
+					histEntry.Stage = "error"
+					histEntry.ErrorMessage = runErr.Error()
+					wailsruntime.EventsEmit(a.ctx, "download:error", map[string]string{"id": entry.ID, "message": runErr.Error()})
+				default:
+					histEntry.Stage = "done"
+					histEntry.Percent = 100
+				}
+				if err := history.Append(histEntry); err != nil {
+					log.Println("history.Append:", err)
 				}
 			},
 		})

@@ -1,4 +1,4 @@
-import { types, settings } from "../../wailsjs/go/models";
+import { types, settings, history } from "../../wailsjs/go/models";
 
 export type MediaInfo = types.MediaInfo;
 export type VideoFormat = types.VideoFormat;
@@ -10,6 +10,8 @@ export type PlaylistEntry = types.PlaylistEntry;
 export type PlaylistInfo = types.PlaylistInfo;
 export type PlaylistDownloadEntry = types.PlaylistDownloadEntry;
 export type PlaylistDownloadRequest = types.PlaylistDownloadRequest;
+export type ToolVersions = types.ToolVersions;
+export type HistoryEntry = history.Entry;
 
 export type DownloadMode = "video" | "audio" | "extract";
 // "queued" is frontend-only - Go never emits it, the row is just seeded at
@@ -40,4 +42,9 @@ export interface DownloadRow extends Progress {
   /** Snapshotted from MediaInfo/PlaylistEntry at registration time - progress
    *  events never carry it, so it has to survive on the row itself. */
   thumbnail?: string;
+  /** The folder this row was (or will be) saved into - lets a "done" row
+   *  offer a "reveal in folder" action. */
+  outputDir?: string;
+  /** The original video URL - used for duplicate-download detection. */
+  sourceUrl?: string;
 }

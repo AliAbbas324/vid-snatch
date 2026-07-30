@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"vid-snatch/internal/binaries"
@@ -20,6 +21,19 @@ type ytJSON struct {
 	Duration     float64     `json:"duration"`
 	ExtractorKey string      `json:"extractor_key"`
 	Formats      []rawFormat `json:"formats"`
+	// Subtitles' values aren't needed, only which language codes are present -
+	// automatic_captions is deliberately not read here (see MediaInfo.SubtitleLanguages).
+	Subtitles map[string]json.RawMessage `json:"subtitles"`
+}
+
+// subtitleLanguages returns the sorted, deduplicated language codes present in raw.Subtitles.
+func subtitleLanguages(raw map[string]json.RawMessage) []string {
+	langs := make([]string, 0, len(raw))
+	for lang := range raw {
+		langs = append(langs, lang)
+	}
+	sort.Strings(langs)
+	return langs
 }
 
 // GetInfo fetches metadata and a filtered format list for url.
@@ -56,13 +70,14 @@ func GetInfo(ctx context.Context, bin binaries.Binaries, url string, s settings.
 	videoFormats, audioFormats := FilterFormats(raw.Formats, prefs)
 
 	return types.MediaInfo{
-		ID:           raw.ID,
-		Title:        raw.Title,
-		Thumbnail:    raw.Thumbnail,
-		DurationSec:  raw.Duration,
-		ExtractorKey: raw.ExtractorKey,
-		VideoFormats: videoFormats,
-		AudioFormats: audioFormats,
+		ID:                raw.ID,
+		Title:             raw.Title,
+		Thumbnail:         raw.Thumbnail,
+		DurationSec:       raw.Duration,
+		ExtractorKey:      raw.ExtractorKey,
+		VideoFormats:      videoFormats,
+		AudioFormats:      audioFormats,
+		SubtitleLanguages: subtitleLanguages(raw.Subtitles),
 	}, nil
 }
 

@@ -1,0 +1,65 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+Vid Snatch is a desktop video/audio downloader built on Wails v2: a Go backend (shells out to `yt-dlp` and `ffmpeg`) paired with a React + TypeScript + Tailwind v4 frontend, packaged as a native window. The Go side owns all yt-dlp/ffmpeg interaction, download concurrency, and settings persistence; the frontend is a thin, mostly-presentational client that calls Go methods through Wails' generated bindings and listens for progress over Wails events.
+
+## Commands
+
+**Run in dev mode** (hot-reloading frontend, live Go rebinding):
+```
+wails dev -tags webkit2_41
+```
+The `-tags webkit2_41` build tag is required on this machine's WebKitGTK version - pass it to both `wails dev` and `wails build` (it's already set as `build:tags` in `wails.json` for `wails build`, but pass it explicitly for `wails dev` too).
+
+**Build a production binary:**
+```
+wails build
+```
+
+**Backend (Go), from repo root:**
+- `go build ./...` - compile check
+- `go vet ./...` - static checks
+- `go test ./...` - run all tests
+- `go test ./internal/ytdlp/... -run TestBuildDownloadArgs_ContainerFallback` - run a single test
+- Tests live in `internal/queue` and `internal/ytdlp`; `internal/binaries`, `internal/settings`, `internal/types`, and `app.go` have no tests.
+
+**Frontend, from `frontend/`:**
+- `pnpm install` - install deps (pnpm is required; `wails.json` calls `pnpm install`/`pnpm build` directly)
+- `pnpm dev` - Vite dev server alone (normally driven by `wails dev`, not run standalone)
+- `pnpm build` - runs `tsc` then `vite build`; this is the closest thing to a lint/typecheck step (there is no ESLint config)
+- No frontend test runner is configured.
+
+**Bound-method regeneration:** if you change a Go method's signature on `App` (`app.go`) or a struct in `internal/types`, `wails dev`/`wails build` regenerates `frontend/wailsjs/` automatically - don't hand-edit that directory.
+
+## Architecture
+
+### Process boundary
+`app.go` defines `App`, the single struct bound to the frontend (`Bind: []interface{}{app}` in `main.go`). Every method on `App` becomes a callable JS function in `frontend/wailsjs/go/main/App.js` (regenerated, not hand-written). The frontend never talks to yt-dlp directly - everything routes through `App`'s methods, wrapped one-for-one in `frontend/src/api/*.ts`.
+
+Long-running work (downloads) can't return a value synchronously, so it follows a different pattern: `StartDownload`/`StartPlaylistDownload` return an ID immediately, and progress streams back later via `wailsruntime.EventsEmit(ctx, "download:progress", ...)` / `"download:error"`. The frontend's `useDownloadProgress` hook (`frontend/src/events/useDownloadProgress.ts`) is the single `EventsOn` subscriber for both events and fans updates out by matching `payload.id` against locally-registered rows - it does not poll Go for status.
+
+### Download concurrency model (`internal/queue`)
+Two independent mechanisms exist because ad-hoc downloads and playlist batches have different ordering requirements:
+- **`Manager` + `Pool`** (`manager.go`, `pool.go`): a semaphore-bounded worker pool for ad-hoc downloads (`StartDownload`). Concurrency is resizable at runtime (`SetConcurrency`, wired to the `MaxActiveDownloads` setting) without disturbing in-flight jobs. `Manager` also tracks a `context.CancelFunc` per download ID so `CancelDownload` can stop one job without affecting others.
+- **`BatchManager` + `Batch`** (`batch.go`): playlist downloads run strictly one-at-a-time in a single goroutine, deliberately bypassing the pool - order matters and only one item runs per batch. Independent batches are NOT serialized against each other. A panic in one item is recovered and the batch continues with the next item.
+
+### yt-dlp integration (`internal/ytdlp`)
+All shelling-out to yt-dlp lives here. Key split: `GetInfo` (single video, full format list) vs. the flat-playlist path (`flatlist.go`) used by both playlist listing and search (`ytsearchN:query` is passed as the "playlist" URL - yt-dlp has no dedicated search extractor, confirmed via `yt-dlp --list-extractors`). `args.go` builds the actual yt-dlp CLI argument list from a `types.DownloadRequest`; `formats.go` filters/labels the raw format list yt-dlp reports into what the UI shows; `progress.go` parses yt-dlp's stdout lines into `Progress` events, including detecting stage transitions (downloading → processing → done) from plain-text lines yt-dlp prints around merging/postprocessing.
+
+### Binaries and settings
+`internal/binaries.Resolve()` locates `yt-dlp`/`ffmpeg` via `VIDSNATCH_YTDLP_PATH`/`VIDSNATCH_FFMPEG_PATH` env vars first, falling back to `PATH`. Resolution happens once at startup (`app.startup`); failure is stored on `App.binErr` rather than crashing the app, so every yt-dlp-touching method checks it and returns it as a normal error instead of the GUI dying before the user sees anything.
+
+`internal/settings` persists `~/.vid-snatch/settings.json` (`Load`/`Save`/`Default`). `App.settings` is loaded once at startup and mutated in place by `SaveSettings`, which also immediately applies `MaxActiveDownloads` to the live `queue.Manager`.
+
+### Frontend structure
+`App.tsx` is the sole orchestrator: it owns all cross-cutting state (active view, theme, output dir/settings, the omnibox's mode/value, which video/playlist inspector is open, download rows) and passes it down as props - there is no router or global store. The UI shell is Rail (fixed-width icon nav) + TopBar (persistent link/search/playlist omnibox, present on every view) + a view body that switches between `DiscoverView`, `DownloadsView`, and `SettingsView`. `Inspector` and `PlaylistInspector` are slide-in panels (not modals) for configuring and starting a download. `CommandPalette` is a ⌘K-triggered action list built from a static array in `App.tsx`.
+
+`frontend/src/types/index.ts` re-exports Wails-generated types (`wailsjs/go/models`) as the app's type vocabulary, plus a hand-mirrored `Progress`/`DownloadRow` pair - `Progress` is event-only (never appears in a bound method signature) so Wails never generates TS for it, and it must be kept in sync with `internal/types.Progress` by hand.
+
+### Theming
+Colors are runtime-swappable CSS custom properties, not Tailwind's build-time `dark:` variant. `style.css`'s `@theme` block registers `--color-*` tokens (dark palette, the default); `:root[data-theme="light"]`/`:root[data-theme="dark"]` blocks and a `prefers-color-scheme` media query override the same variable names for the other modes. Every component just uses semantic utilities (`bg-surface`, `text-ink-muted`, ...) and repaints correctly across themes with zero `dark:` prefixes anywhere. `frontend/index.html` applies the stored theme via an inline script before first paint to avoid a flash; `theme/useTheme.ts` takes over from there and persists the choice (`auto`/`light`/`dark`) to `localStorage`.
+
+DownloadsView's list is a CSS grid (not a `<table>`): the header row and every data row share one `GRID_COLS` template string, which is what keeps columns aligned regardless of row content - the responsive variant swaps in a 4-column template below the `md` breakpoint (hiding the Speed/ETA cell) rather than just hiding a `<td>`, since a grid item's visibility and the grid's column count have to change together or alignment breaks.

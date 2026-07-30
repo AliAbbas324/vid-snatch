@@ -137,6 +137,60 @@ func TestBuildDownloadArgs_TitleSanitization(t *testing.T) {
 	}
 }
 
+func TestBuildDownloadArgs_LimitRateAndSplitChapters(t *testing.T) {
+	req := types.DownloadRequest{
+		URL: "https://example.com", Mode: "audio", AudioFormatID: "140", AudioExt: "m4a",
+		OutputDir: "/tmp", Title: "T",
+	}
+
+	s := testSettings()
+	args, _, err := BuildDownloadArgs(req, testBin(), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if containsFlag(args, "--limit-rate") || containsFlag(args, "--split-chapters") {
+		t.Fatalf("expected neither flag when unset, got %v", args)
+	}
+
+	s.LimitRate = "1M"
+	s.SplitChapters = true
+	args, _, err = BuildDownloadArgs(req, testBin(), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !containsArg(args, "--limit-rate", "1M") {
+		t.Fatalf("expected --limit-rate 1M, got %v", args)
+	}
+	if !containsFlag(args, "--split-chapters") {
+		t.Fatalf("expected --split-chapters, got %v", args)
+	}
+}
+
+func TestBuildDownloadArgs_SubLangs(t *testing.T) {
+	base := types.DownloadRequest{
+		URL: "https://example.com", Mode: "audio", AudioFormatID: "140", AudioExt: "m4a",
+		OutputDir: "/tmp", Title: "T", WriteSubs: true,
+	}
+
+	args, _, err := BuildDownloadArgs(base, testBin(), testSettings())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !containsArg(args, "--sub-langs", "all") {
+		t.Fatalf("expected --sub-langs all when SubLangs unset, got %v", args)
+	}
+
+	withLangs := base
+	withLangs.SubLangs = "en,es"
+	args, _, err = BuildDownloadArgs(withLangs, testBin(), testSettings())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !containsArg(args, "--sub-langs", "en,es") {
+		t.Fatalf("expected --sub-langs en,es, got %v", args)
+	}
+}
+
 func containsArg(args []string, flag, value string) bool {
 	for i := 0; i < len(args)-1; i++ {
 		if args[i] == flag && args[i+1] == value {

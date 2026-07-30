@@ -45,26 +45,28 @@ func Download(ctx context.Context, bin binaries.Binaries, id string, args []stri
 		return err
 	}
 
+	var lastPercent float64
 	sc := bufio.NewScanner(stdout)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for sc.Scan() {
 		line := sc.Text()
 		if p, ok := ParseLine(id, line); ok {
+			lastPercent = p.Percent
 			emit(p)
 			continue
 		}
 		if stage, ok := DetectStage(line); ok {
-			emit(types.Progress{ID: id, Stage: stage})
+			emit(types.Progress{ID: id, Percent: lastPercent, Stage: stage})
 		}
 	}
 
 	waitErr := cmd.Wait()
 	if ctx.Err() != nil {
-		emit(types.Progress{ID: id, Stage: "cancelled"})
+		emit(types.Progress{ID: id, Percent: lastPercent, Stage: "cancelled"})
 		return nil
 	}
 	if waitErr != nil {
-		emit(types.Progress{ID: id, Stage: "error"})
+		emit(types.Progress{ID: id, Percent: lastPercent, Stage: "error"})
 		if msg := strings.TrimSpace(stderrBuf.String()); msg != "" {
 			return fmt.Errorf("%s", msg)
 		}
