@@ -17,13 +17,19 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "vid-snatch",
-		Width:  1024,
-		Height: 768,
+		Title:     "vid-snatch",
+		Width:     1024,
+		Height:    768,
+		MinWidth:  1024,
+		MinHeight: 768,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		// Matches the dark theme's base surface - the common case, since
+		// most OSes default to dark or the user hasn't chosen light yet -
+		// so the native window paints close to the eventual page instead of
+		// flashing white before the webview content takes over.
+		BackgroundColour: &options.RGBA{R: 26, G: 26, B: 28, A: 1},
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
