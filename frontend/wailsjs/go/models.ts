@@ -88,6 +88,24 @@ export namespace types {
 	        this.label = source["label"];
 	    }
 	}
+	export class DependencyStatus {
+	    ytdlpMissing: boolean;
+	    ffmpegMissing: boolean;
+	    canAutoInstall: boolean;
+	    manualFfmpegHint?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DependencyStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ytdlpMissing = source["ytdlpMissing"];
+	        this.ffmpegMissing = source["ffmpegMissing"];
+	        this.canAutoInstall = source["canAutoInstall"];
+	        this.manualFfmpegHint = source["manualFfmpegHint"];
+	    }
+	}
 	export class DownloadRequest {
 	    url: string;
 	    mode: string;

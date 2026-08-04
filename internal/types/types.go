@@ -70,6 +70,27 @@ type ToolVersions struct {
 	FfmpegVersion string `json:"ffmpegVersion"`
 }
 
+// DependencyStatus reports whether the yt-dlp/ffmpeg binaries this app shells
+// out to are present, and if not, whether InstallDependencies can fetch them
+// automatically on this OS/architecture.
+type DependencyStatus struct {
+	YtdlpMissing   bool `json:"ytdlpMissing"`
+	FfmpegMissing  bool `json:"ffmpegMissing"`
+	CanAutoInstall bool `json:"canAutoInstall"`
+	// ManualFfmpegHint is a shell command to run instead, non-empty only when
+	// FfmpegMissing is true and this platform has no auto-installable build
+	// (currently just macOS - see binaries.ManualFfmpegHint).
+	ManualFfmpegHint string `json:"manualFfmpegHint,omitempty"`
+}
+
+// SetupProgress is emitted on the "setup:progress" event while
+// InstallDependencies downloads missing binaries.
+type SetupProgress struct {
+	Tool    string `json:"tool"`  // "yt-dlp" | "ffmpeg"
+	Stage   string `json:"stage"` // "downloading" | "extracting"
+	Percent int    `json:"percent"`
+}
+
 // Progress is emitted on the "download:progress" event.
 type Progress struct {
 	ID      string  `json:"id"`

@@ -10,8 +10,16 @@ export function CancelPlaylistDownload(arg1) {
   return window['go']['main']['App']['CancelPlaylistDownload'](arg1);
 }
 
+export function CheckDependencies() {
+  return window['go']['main']['App']['CheckDependencies']();
+}
+
 export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
+}
+
+export function GetAppVersion() {
+  return window['go']['main']['App']['GetAppVersion']();
 }
 
 export function GetHistory() {
@@ -36,6 +44,10 @@ export function GetToolVersions() {
 
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
+}
+
+export function InstallDependencies() {
+  return window['go']['main']['App']['InstallDependencies']();
 }
 
 export function OpenInFileManager(arg1) {

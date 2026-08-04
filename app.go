@@ -63,6 +63,12 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
+// GetAppVersion returns vid-snatch's own version, for display in Settings'
+// About card. "dev" outside of a real production build (see appVersion).
+func (a *App) GetAppVersion() string {
+	return appVersion
+}
+
 // GetInfo fetches metadata and a filtered format list for the given URL.
 func (a *App) GetInfo(url string) (types.MediaInfo, error) {
 	if a.binErr != nil {
@@ -112,6 +118,38 @@ func (a *App) GetToolVersions() (types.ToolVersions, error) {
 		return types.ToolVersions{}, a.binErr
 	}
 	return ytdlp.GetToolVersions(a.ctx, a.bin)
+}
+
+// CheckDependencies reports whether yt-dlp/ffmpeg are resolvable right now,
+// and whether InstallDependencies can fetch whatever's missing automatically
+// on this OS/architecture. The frontend calls this once on load to decide
+// whether to show the dependency-setup banner.
+func (a *App) CheckDependencies() types.DependencyStatus {
+	ytdlpMissing, ffmpegMissing := binaries.Missing()
+	return types.DependencyStatus{
+		YtdlpMissing:     ytdlpMissing,
+		FfmpegMissing:    ffmpegMissing,
+		CanAutoInstall:   binaries.Installable(),
+		ManualFfmpegHint: binaries.ManualFfmpegHint(),
+	}
+}
+
+// InstallDependencies downloads whichever of yt-dlp/ffmpeg are currently
+// missing into the managed ~/.vid-snatch/bin directory, streaming progress
+// via the "setup:progress" event. It re-resolves a.bin/a.binErr on return
+// (even on error - installing one of the two is still progress), so every
+// other bound method picks up the newly-installed binaries without needing
+// an app restart.
+func (a *App) InstallDependencies() error {
+	err := binaries.Install(a.ctx, func(p binaries.Progress) {
+		wailsruntime.EventsEmit(a.ctx, "setup:progress", types.SetupProgress{
+			Tool:    p.Tool,
+			Stage:   p.Stage,
+			Percent: p.Percent,
+		})
+	})
+	a.bin, a.binErr = binaries.Resolve()
+	return err
 }
 
 // GetHistory returns every recorded finished download, oldest first.

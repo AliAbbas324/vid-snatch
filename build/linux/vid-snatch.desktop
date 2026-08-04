@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Vid Snatch
+Comment=Desktop video/audio downloader built on yt-dlp and ffmpeg
+Exec=vid-snatch
+Icon=vid-snatch
+Categories=AudioVideo;Network;
+Terminal=false

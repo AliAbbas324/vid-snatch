@@ -10,5 +10,12 @@
   "author": {
     "name": "",
     "email": ""
+  },
+  "info": {
+    "companyName": "Vid Snatch",
+    "productName": "Vid Snatch",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Vid Snatch",
+    "comments": "Desktop video/audio downloader built on yt-dlp and ffmpeg"
   }
 }

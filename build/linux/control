@@ -1,0 +1,9 @@
+Package: vid-snatch
+Version: __VERSION__
+Section: video
+Priority: optional
+Architecture: amd64
+Depends: libgtk-3-0 | libgtk-3-0t64, libwebkit2gtk-4.1-0
+Maintainer: Vid Snatch
+Description: Desktop video/audio downloader
+ Vid Snatch is a desktop video/audio downloader built on yt-dlp and ffmpeg.

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleHalf, FolderOpen, Moon, Sun, Trash } from "@phosphor-icons/react";
 import { pickDownloadDir, pickFile } from "../api/settings";
-import { getToolVersions, openInFileManager } from "../api/system";
+import { getAppVersion, getToolVersions, openInFileManager } from "../api/system";
 import type { Settings, ToolVersions } from "../types";
 import type { ThemeChoice } from "../theme/useTheme";
 
@@ -124,10 +124,12 @@ function ToggleField({
 }
 
 function AboutCard({ className }: { className?: string }) {
+  const [appVersion, setAppVersion] = useState<string | null>(null);
   const [versions, setVersions] = useState<ToolVersions | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    getAppVersion().then(setAppVersion);
     getToolVersions()
       .then(setVersions)
       .catch((err) => setError((err as Error).message));
@@ -135,16 +137,19 @@ function AboutCard({ className }: { className?: string }) {
 
   return (
     <SettingsCard title="About" className={className}>
-      {error ? (
-        <p className="mt-2 text-base text-danger">{error}</p>
-      ) : versions ? (
-        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 font-mono text-base text-ink-muted">
-          <div>yt-dlp {versions.ytdlpVersion}</div>
-          <div>ffmpeg {versions.ffmpegVersion}</div>
-        </div>
-      ) : (
-        <p className="mt-2 text-base text-ink-muted">Checking versions…</p>
-      )}
+      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 font-mono text-base text-ink-muted">
+        {appVersion && <div>Vid Snatch v{appVersion}</div>}
+        {error ? (
+          <div className="text-danger">{error}</div>
+        ) : versions ? (
+          <>
+            <div>yt-dlp {versions.ytdlpVersion}</div>
+            <div>ffmpeg {versions.ffmpegVersion}</div>
+          </>
+        ) : (
+          <div>Checking tool versions…</div>
+        )}
+      </div>
     </SettingsCard>
   );
 }

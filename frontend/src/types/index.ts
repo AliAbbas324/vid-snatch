@@ -11,6 +11,7 @@ export type PlaylistInfo = types.PlaylistInfo;
 export type PlaylistDownloadEntry = types.PlaylistDownloadEntry;
 export type PlaylistDownloadRequest = types.PlaylistDownloadRequest;
 export type ToolVersions = types.ToolVersions;
+export type DependencyStatus = types.DependencyStatus;
 export type HistoryEntry = history.Entry;
 
 export type DownloadMode = "video" | "audio" | "extract";
@@ -30,6 +31,17 @@ export interface Progress {
   speed: string;
   eta: string;
   stage: DownloadStage;
+}
+
+/**
+ * Mirrors Go's types.SetupProgress. Same story as Progress above - only ever
+ * an event payload (emitted on "setup:progress" by InstallDependencies), so
+ * Wails never generates TS for it.
+ */
+export interface SetupProgress {
+  tool: "yt-dlp" | "ffmpeg";
+  stage: "downloading" | "extracting";
+  percent: number;
 }
 
 /** Per-download UI state: a Progress event plus the display info the row needs to render. */

@@ -6,6 +6,7 @@ import { DownloadsView, type DownloadFilter } from "./components/DownloadsView";
 import { SettingsView } from "./components/SettingsView";
 import { Inspector } from "./components/Inspector";
 import { PlaylistInspector } from "./components/PlaylistInspector";
+import { DependencySetup } from "./components/DependencySetup";
 import { Toast, type ToastState } from "./components/Toast";
 import { useTheme } from "./theme/useTheme";
 import { useDownloadProgress } from "./events/useDownloadProgress";
@@ -256,6 +257,8 @@ function App() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <DependencySetup />
+
         <TopBar
           viewTitle={VIEW_META[view].title}
           viewSub={headerSub}
