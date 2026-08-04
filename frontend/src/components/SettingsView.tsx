@@ -47,13 +47,6 @@ const BROWSER_OPTIONS = [
   { value: "whale", label: "Whale" },
 ];
 
-const SHORTCUTS = [
-  { keys: "⌘K / Ctrl+K", action: "Open command palette" },
-  { keys: "↑ / ↓", action: "Navigate palette results" },
-  { keys: "Enter", action: "Run selected / submit" },
-  { keys: "Esc", action: "Close palette or panel" },
-];
-
 const inputClass =
   "mt-1 rounded-lg border border-border-strong bg-surface-2 px-4 py-3 font-mono text-base text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-wash";
 const selectClass =
@@ -61,9 +54,17 @@ const selectClass =
 const fieldLabelClass = "text-sm font-semibold text-ink";
 const fieldHelpClass = "text-sm text-ink-muted";
 
-function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SettingsCard({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-7">
+    <div className={`rounded-2xl border border-border bg-surface p-7 ${className}`}>
       <h3 className="mb-2 font-mono text-sm font-bold uppercase tracking-wide text-ink-muted">{title}</h3>
       {children}
     </div>
@@ -122,7 +123,7 @@ function ToggleField({
   );
 }
 
-function AboutCard() {
+function AboutCard({ className }: { className?: string }) {
   const [versions, setVersions] = useState<ToolVersions | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,11 +134,11 @@ function AboutCard() {
   }, []);
 
   return (
-    <SettingsCard title="About">
+    <SettingsCard title="About" className={className}>
       {error ? (
         <p className="mt-2 text-base text-danger">{error}</p>
       ) : versions ? (
-        <div className="mt-2 flex flex-col gap-2 font-mono text-base text-ink-muted">
+        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 font-mono text-base text-ink-muted">
           <div>yt-dlp {versions.ytdlpVersion}</div>
           <div>ffmpeg {versions.ffmpegVersion}</div>
         </div>
@@ -172,8 +173,8 @@ export function SettingsView({
   }
 
   return (
-    <div className="flex max-w-175 flex-col gap-6">
-      <SettingsCard title="Output">
+    <div className="grid grid-flow-row-dense grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+      <SettingsCard title="Output" className="lg:col-span-2">
         <label className="mt-3 flex flex-col gap-2.5 font-mono text-sm font-bold uppercase tracking-wide text-ink-muted">
           Save downloads to
           <div className="mt-1 flex flex-wrap gap-3">
@@ -201,7 +202,33 @@ export function SettingsView({
         </label>
       </SettingsCard>
 
-      <SettingsCard title="Downloads">
+      <SettingsCard title="Appearance">
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="text-lg font-semibold text-ink">Theme</div>
+            <div className="mt-1 text-base leading-relaxed text-ink-muted">
+              Match your system, or lock Command Deck to one mode.
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-1 rounded-xl bg-surface-2 p-1">
+            {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
+              <button
+                type="button"
+                key={key}
+                onClick={() => onThemeChange(key)}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-base font-semibold transition-colors ${
+                  theme === key ? "bg-surface text-accent shadow-sm" : "text-ink-muted hover:text-ink"
+                }`}
+              >
+                <Icon size={17} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </SettingsCard>
+
+      <SettingsCard title="Downloads" className="lg:col-span-2">
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <SelectField
             label="Concurrent downloads"
@@ -292,32 +319,6 @@ export function SettingsView({
         </div>
       </SettingsCard>
 
-      <SettingsCard title="Appearance">
-        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="text-lg font-semibold text-ink">Theme</div>
-            <div className="mt-1 text-base leading-relaxed text-ink-muted">
-              Match your system, or lock Command Deck to one mode.
-            </div>
-          </div>
-          <div className="flex shrink-0 gap-1 rounded-xl bg-surface-2 p-1">
-            {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
-              <button
-                type="button"
-                key={key}
-                onClick={() => onThemeChange(key)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-base font-semibold transition-colors ${
-                  theme === key ? "bg-surface text-accent shadow-sm" : "text-ink-muted hover:text-ink"
-                }`}
-              >
-                <Icon size={17} />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </SettingsCard>
-
       <SettingsCard title="History">
         <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -339,20 +340,7 @@ export function SettingsView({
         </div>
       </SettingsCard>
 
-      <AboutCard />
-
-      <SettingsCard title="Shortcuts">
-        <div className="mt-3 flex flex-col gap-2.5">
-          {SHORTCUTS.map((s) => (
-            <div key={s.action} className="flex items-center justify-between gap-4">
-              <span className="text-base text-ink-muted">{s.action}</span>
-              <kbd className="rounded-md border border-border-strong bg-surface-2 px-2.5 py-1 font-mono text-sm text-ink">
-                {s.keys}
-              </kbd>
-            </div>
-          ))}
-        </div>
-      </SettingsCard>
+      <AboutCard className="lg:col-span-2" />
     </div>
   );
 }

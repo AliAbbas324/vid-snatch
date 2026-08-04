@@ -12,7 +12,6 @@ interface Props {
   onSubmit: () => void;
   loading: boolean;
   error: string | null;
-  onOpenPalette: () => void;
 }
 
 const MODE_META: Record<OmniMode, { icon: typeof LinkSimple; label: string; placeholder: string }> = {
@@ -32,7 +31,6 @@ export function TopBar({
   onSubmit,
   loading,
   error,
-  onOpenPalette,
 }: Props) {
   const LeadIcon = MODE_META[mode].icon;
 
@@ -77,14 +75,6 @@ export function TopBar({
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={onOpenPalette}
-          className="hidden shrink-0 rounded-md border border-border-strong bg-surface px-2.5 py-2 font-mono text-sm text-ink-muted transition-colors hover:border-ink-faint hover:bg-surface-3 md:inline-flex"
-          aria-label="Open command palette"
-        >
-          ⌘K
-        </button>
         <button
           type="button"
           onClick={onSubmit}

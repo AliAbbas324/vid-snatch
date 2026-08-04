@@ -1,4 +1,4 @@
-import { Command, GearSix, MagnifyingGlass, Moon, CircleHalf, Sun, TrayArrowDown } from "@phosphor-icons/react";
+import { GearSix, MagnifyingGlass, Moon, CircleHalf, Sun, TrayArrowDown } from "@phosphor-icons/react";
 import { Logo } from "./Logo";
 import type { ThemeChoice } from "../theme/useTheme";
 
@@ -8,7 +8,6 @@ interface Props {
   view: View;
   onViewChange: (view: View) => void;
   activeCount: number;
-  onOpenPalette: () => void;
   theme: ThemeChoice;
   onCycleTheme: () => void;
 }
@@ -47,7 +46,7 @@ function RailButton({
 
 /** Fixed-width icon rail: it never needs to collapse or reflow, so it stays
  *  identical across every window size the app can be resized to. */
-export function Rail({ view, onViewChange, activeCount, onOpenPalette, theme, onCycleTheme }: Props) {
+export function Rail({ view, onViewChange, activeCount, theme, onCycleTheme }: Props) {
   const ThemeIcon = THEME_ICON[theme];
 
   return (
@@ -73,9 +72,6 @@ export function Rail({ view, onViewChange, activeCount, onOpenPalette, theme, on
 
       <div className="flex-1" />
       <div className="mb-2.5 h-px w-7 bg-border" />
-      <RailButton label="Command palette" onClick={onOpenPalette}>
-        <Command size={21} />
-      </RailButton>
       <RailButton label="Toggle theme" onClick={onCycleTheme}>
         <ThemeIcon size={21} />
       </RailButton>

@@ -1,15 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  CircleHalf,
-  GearSix,
-  LinkSimple,
-  ListBullets,
-  MagnifyingGlass,
-  Moon,
-  Sun,
-  Trash,
-  TrayArrowDown,
-} from "@phosphor-icons/react";
 import { Rail, type View } from "./components/Rail";
 import { TopBar } from "./components/TopBar";
 import { DiscoverView } from "./components/DiscoverView";
@@ -17,7 +6,6 @@ import { DownloadsView, type DownloadFilter } from "./components/DownloadsView";
 import { SettingsView } from "./components/SettingsView";
 import { Inspector } from "./components/Inspector";
 import { PlaylistInspector } from "./components/PlaylistInspector";
-import { CommandPalette, type PaletteAction } from "./components/CommandPalette";
 import { Toast, type ToastState } from "./components/Toast";
 import { useTheme } from "./theme/useTheme";
 import { useDownloadProgress } from "./events/useDownloadProgress";
@@ -64,7 +52,6 @@ function App() {
   const [retryRequests, setRetryRequests] = useState<Record<string, { req: DownloadRequest; thumbnail?: string }>>({});
 
   const [downloadFilter, setDownloadFilter] = useState<DownloadFilter>("all");
-  const [paletteOpen, setPaletteOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -247,40 +234,16 @@ function App() {
     }
   }
 
-  /* ---------------- command palette ---------------- */
-  const paletteActions = useMemo<PaletteAction[]>(
-    () => [
-      { label: "Go to Discover", icon: MagnifyingGlass, run: () => setView("discover") },
-      { label: "Go to Downloads", icon: TrayArrowDown, run: () => setView("downloads") },
-      { label: "Go to Settings", icon: GearSix, run: () => setView("settings") },
-      { label: "Paste a link", icon: LinkSimple, run: () => { setView("discover"); handleOmniModeChange("link"); } },
-      { label: "Search YouTube", icon: MagnifyingGlass, run: () => { setView("discover"); handleOmniModeChange("search"); } },
-      { label: "Load a playlist", icon: ListBullets, run: () => { setView("discover"); handleOmniModeChange("playlist"); } },
-      { label: "Switch to light theme", icon: Sun, run: () => setTheme("light") },
-      { label: "Switch to dark theme", icon: Moon, run: () => setTheme("dark") },
-      { label: "Match system theme", icon: CircleHalf, run: () => setTheme("auto") },
-      { label: "Clear completed history", icon: Trash, run: () => { setView("settings"); handleClearHistory(); } },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((o) => !o);
-        return;
-      }
       if (e.key === "Escape") {
-        if (paletteOpen) setPaletteOpen(false);
-        else if (activeVideo) setActiveVideo(null);
+        if (activeVideo) setActiveVideo(null);
         else if (playlistPicker) setPlaylistPicker(null);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [paletteOpen, activeVideo, playlistPicker]);
+  }, [activeVideo, playlistPicker]);
 
   return (
     <div className="flex h-screen min-w-0 bg-bg text-ink">
@@ -288,7 +251,6 @@ function App() {
         view={view}
         onViewChange={setView}
         activeCount={activeCount + queuedCount}
-        onOpenPalette={() => setPaletteOpen(true)}
         theme={theme}
         onCycleTheme={cycleTheme}
       />
@@ -305,7 +267,6 @@ function App() {
           onSubmit={handleOmniSubmit}
           loading={omniLoading}
           error={omniError}
-          onOpenPalette={() => setPaletteOpen(true)}
         />
 
         <div className="min-w-0 flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-7">
@@ -372,7 +333,6 @@ function App() {
         onClose={() => setPlaylistPicker(null)}
       />
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} actions={paletteActions} />
       <Toast toast={toast} />
     </div>
   );
